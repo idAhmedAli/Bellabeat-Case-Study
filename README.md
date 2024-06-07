@@ -207,6 +207,8 @@ summary(minutes_met)
 summary(minute_sleep)
 summary(sleep_day)
 ```
+![daily activity summary](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/c3ecd3c1-86ed-4e87-854b-63ab1107b5c1)
+
 Since the date columns range between 2016-03-12 and 2016-05-12, it means the merging process was successful, and the data types of the date and time columns were successfully converted. Additionally, the column names have been appropriately formatted.
 
 ### Analayzing
@@ -240,11 +242,592 @@ activities_summary <- daily_activity %>%
   )
 print(activities_summary)
 ```
+![distances summary](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/ab2cc5bc-a4ae-4e10-aac1-c37999e11fc1)
+
 The total number of distance records in the daily_activity table is 1,397. Out of these:
 - 56 records contain only logged_activities_distance, making up 4.01% of the total records.
 - 1,253 records contain only tracker_distance, accounting for 89.69% of the total records.
 - 52 records contain both logged_activities_distance and tracker_distance, representing 3.72% of the total records.
 - 141 records do not contain any distance data, constituting 10.09% of the total records.
+
+```r
+# calculate the average of total distances and very active distances
+ave_total_distance <- daily_activity %>% 
+  drop_na() %>% 
+  summarise("Average Total Distance" = round(mean(total_distance), digits = 2),
+            "Average Very Active Distance" = round(mean(very_active_distance), digits = 2))
+print(ave_total_distance)
+
+# calculate the averages of active distances per day of week
+daily_ave_distances <- daily_activity %>% 
+  mutate(day_of_week = factor(wday(activity_date, label = TRUE, abbr = FALSE), 
+                              levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) %>% 
+  group_by(day_of_week) %>% 
+  summarise(avg_total_distance = mean(total_distance),
+            avg_very_active_distance = mean(very_active_distance),
+            avg_moderately_active_distance = mean(moderately_active_distance),
+            avg_light_active_distance = mean(light_active_distance)
+  ) %>% 
+  arrange(factor(day_of_week, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")))
+
+print(daily_ave_distances, width = Inf)
+
+# create a bar chart that shows the average of very active distance vs. every day of week
+ggplot(daily_ave_distances, aes(x = day_of_week, y = avg_very_active_distance, fill = avg_moderately_active_distance)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = round(avg_very_active_distance, 2)), vjust = -0.3, size = 3.5) +
+  scale_fill_gradient(low = "grey", high = "black") +
+  
+  theme_minimal() +
+  labs(title = "Average of Very Active Distance Per Day of Week",
+       x = "Day of Week",
+       y = "Very Active Distance") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+# create a bar chart that shows the average of total distance vs. every day of week
+ggplot(daily_ave_distances, aes(x = day_of_week, y = avg_total_distance, fill = avg_light_active_distance)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = round(avg_total_distance, 2)), vjust = -0.3, size = 3.5) +
+  scale_fill_gradient(low = "grey", high = "black") +
+  
+  theme_minimal() +
+  labs(title = "Average of Total Distance Per Day of Week",
+       x = "Day of Week",
+       y = "Total Active Distance") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+![ave of very active distance](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/8ac0d378-f9a9-4692-abe8-928c4cb3dc23)
+
+![ave of total distance](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/ef082c2f-6a27-4988-9b39-9e2a7cd78e58)
+
+- Saturday stands out as the day with the highest moderately active distance and light active distance. Additionally, it exceeds the average in very active distance, making - it the day with the highest total_distance.
+
+- The highest "Very Active Distance" occurs during the middle of the week, specifically on Wednesday. It's worth noting that Wednesday's "Very ِ Active Distance" is significantly higher than that of the surrounding days, which are below average.
+
+- Sunday stands out as the day with the least light active distance, and its "Very ِ Active Distance" also falls below the average.
+
+```r
+# calculate the average distances per user
+users_averages_distances <- daily_activity %>%
+  drop_na() %>% 
+  group_by(id) %>%
+  summarise(
+    avg_total_distance = mean(total_distance),
+    avg_very_active_distance = mean(very_active_distance),
+    avg_moderately_active_distance = mean(moderately_active_distance),
+    avg_light_active_distance = mean(light_active_distance)
+  )
+# determine the number of users whose average distance is higher than the average for each distance category
+averages_distances <- users_averages_distances %>%
+  summarise(
+    total_distance = sum(avg_total_distance >= mean(daily_activity$total_distance)),
+    very_active_distance = sum(avg_very_active_distance >= mean(daily_activity$very_active_distance)),
+    moderately_active_distance = sum(avg_moderately_active_distance >= mean(daily_activity$moderately_active_distance)),
+    light_active_distance = sum(avg_light_active_distance >= mean(daily_activity$light_active_distance))
+  )
+
+averages_distances <- averages_distances %>%
+  gather(key = "Distance Type", value = "Number of Users")
+
+print(averages_distances)
+```
+![average distances](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/365a8df5-1f48-4c21-86b4-72991c4d9175)
+
+
+As shown, approximately half of the users exceed the overall average for Lightly Active Distance. The number of users decreases as the activity level increases, as seen in the Very Active Distance category.
+
+```r
+# calculate the average of very active minutes
+ave_very_active_min <- daily_activity %>% 
+  summarise("average of very active minutes" =round(mean(very_active_minutes), digits = 2))
+print(ave_very_active_min)
+
+# calculate the averages of active minutes per day of week
+daily_ave_active_minutes <- daily_activity %>% 
+  mutate(day_of_week = factor(wday(activity_date, label = TRUE, abbr = FALSE), 
+                              levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) %>% 
+  group_by(day_of_week) %>% 
+  summarise(avg_very_active_min = mean(very_active_minutes),
+            avg_fairly_active_min = mean(fairly_active_minutes),
+            avg_lightly_active_min = mean(lightly_active_minutes),
+            avg_sedentary_min = mean(sedentary_minutes)
+  )
+
+# create a bar chart that shows the average of very active minutes per every day of week
+
+ggplot(daily_ave_active_minutes, aes(x = `day_of_week`, y = `avg_very_active_min`, fill = `avg_sedentary_min`)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = round(avg_very_active_min, 2)), vjust = -0.3, size = 3.5) +
+  scale_fill_gradient(low = "lightblue", high = "navy") +
+  theme_minimal() +
+  labs(title = "Average of Very Active Minutes Per Day of Week ",
+       x = "Day of Week",
+       y = "Very Active Minutes") +
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+![ave of very active minutes](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/77ac3428-1d46-4f15-a0ab-d1d8db4ca3d7)
+
+- It's worth noting that the avgerage of very active minutes is lowest on Sunday and highest on Monday.
+- It's noteworthy that Thursday, Friday, and Sunday have avge_very_active_min values lower than the overall average.
+
+
+```r
+# calculate the averages of active minutes per user
+users_averages_active_minutes <- daily_activity %>%
+  drop_na() %>% 
+  group_by(id) %>%
+  summarise(avg_very_active_min = mean(very_active_minutes),
+            avg_fairly_active_min = mean(fairly_active_minutes),
+            avg_lightly_active_min = mean(lightly_active_minutes),
+            avg_sedentary_min = mean(sedentary_minutes))
+
+# determine the number of users whose active minutes is higher than the average for each activity minutes type
+averages_active_minutes <- users_averages_active_minutes %>%
+  drop_na() %>% 
+  summarise(
+    very_active_minutes = sum(avg_very_active_min >= mean(daily_activity$very_active_minutes)),
+    fairly_active_minutes = sum(avg_fairly_active_min >= mean(daily_activity$fairly_active_minutes)),
+    lightly_active_minutes = sum(avg_lightly_active_min >= mean(daily_activity$lightly_active_minutes)),
+    sedentary_minutes = sum(avg_sedentary_min >= mean(daily_activity$sedentary_minutes))
+  )
+
+averages_active_minutes <- averages_active_minutes %>%
+  gather(key = "Activity Minutes Type", value = "Number of Users")
+print(averages_active_minutes)
+
+ggplot(averages_active_minutes, aes(x = `Activity Minutes Type`, y = `Number of Users`, fill = `Activity Minutes Type`)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Number of Users Who Spent More than the Average of Activity Minutes",
+       x = "Type of Activity Minutes",
+       y = "Number of Users") +
+  scale_fill_brewer(palette = "Set3") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+![users number vs av act min](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/127fdaec-0cf9-43f9-ab42-cbc5ffabf96f)
+
+It appears that nearly half of the users spend fairly_active_minutes and lightly_active_minutes above the average. Meanwhile, the number decreases for very_active_minutes and increases for sedentary_minutes.
+
+```r
+manual_report <- weight_info %>% 
+  summarise(
+    manual = sum(is_manual_report == "True"),
+    non_manual = sum(is_manual_report == "False"),
+    users = n_distinct(id)
+  )
+print(manual_report)
+
+manual_report <- data.frame(
+  Type = c("Manual", "Non-manual"),
+  Count = c(63, 35)
+)
+
+ggplot(manual_report, aes(x = "", y = Count, fill = Type)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y", start = 0) +
+  labs(title = "Manual and Non-manual Reports") +
+  theme_void() + 
+  theme(legend.title = element_blank())
+```
+
+![manual report PNG](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/da2eaf92-8497-4e7d-8297-e7fc466c8aa1)
+
+It appears that less than two-thirds of the weight data entries for the 13 users were entered manually.
+
+```r
+# Calculate the number of users who have recorded a value in the fat column
+users_with_fat_records <- weight_info %>%
+  filter(!is.na(fat)) %>% 
+  summarise(total_users_with_fat = n_distinct(id))
+print(users_with_fat_records)
+```
+Only 3 users recorded fat data.
+
+BMI, or Body Mass Index, is a measure used to assess whether a person's weight is appropriate for their height. It is calculated using the following formula:
+BMI = weight (kg) / hight (m)^2
+Interpretation of BMI Values:
+- Under 18.5: Underweight
+- 18.5 - 24.9: Normal weight
+- 25 - 29.9: Overweight
+- 30 and above: Obesity 
+
+```r
+# adding a column for weight type after calculating the average weight and average BMI for each user
+weight_summary <- weight_info %>% 
+  group_by(id) %>% 
+  summarise(ave_weight_kg = mean(weight_kg),
+            ave_bmi = mean(bmi))
+weight_summary <- weight_summary %>% 
+  mutate(weight_type = case_when(
+    ave_bmi < 18.5 ~ "Underweight",
+    ave_bmi >= 18.5 & ave_bmi < 24.9 ~ "Normal weight",
+    ave_bmi >= 25 & ave_bmi < 29.9 ~ "Overweight",
+    ave_bmi >= 30 ~ "Obesity",
+    TRUE ~ "Unknown"
+  ))
+print(weight_summary)
+ 
+# Pie chart for weight type distribution
+
+weight_type <- weight_summary %>%
+  group_by(weight_type) %>%
+  summarise(users = n())
+
+pie_colors <- c("#FF9999", "#66CCCC", "#FFCC99", "#99FF99", "#FF6666")
+
+ggplot(weight_type, aes(x = "", y = users, fill = weight_type, label = paste(weight_type, "(", users, ")"))) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y", start = 0) +
+  geom_text(size = 3, position = position_stack(vjust = 0.5)) +
+  labs(title = "Weight Type",
+       fill = "Weight Type",
+       x = NULL, y = NULL) +
+  scale_fill_manual(values = pie_colors) +  # Apply custom colors
+  theme_void()
+```
+
+![weight type](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/0277abe7-ca13-498d-8d26-d1fdd99521db)
+
+Despite the limited data available, it indicates that only 4 out of the 13 users, which accounts for one-third, fall within the normal weight range, while the rest experience overweight or obesity.
+
+```r
+# calculate the average steps per user
+average_steps <- daily_activity %>% 
+  group_by(id) %>% 
+  summarise(ave_steps = mean(total_steps))
+print(average_steps)
+
+# merge weight_summary and average_steps
+weight_steps <- weight_summary %>% 
+  left_join(average_steps, by = "id")
+print(weight_steps)
+
+ggplot(weight_steps, aes(x = ave_bmi, y = ave_steps)) +
+  geom_point(size = 3, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  geom_smooth() +
+  labs(title = "Correlation Between Average Steps and BMI",
+       x = "Average BMI",
+       y = "Average Steps") +
+  theme_minimal()
+```
+
+![corr avg steps and bmi](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/d035f843-c62c-4cd7-bac2-db4ac8ca8637)
+
+Furthermore, in the data of the 13 users, we can observe an inverse relationship between the BMI and the number of steps.
+
+```r
+# merge hourly data
+hourly_list <- list(hourly_calories, hourly_intensities, hourly_steps)
+hourly_data <- reduce(hourly_list, full_join, by = c("id", "activity_date", "activity_hour"))
+hourly_data <- hourly_data %>% 
+  drop_na()
+
+ggplot(hourly_data, mapping = aes(x= calories, y= step_total, colour = total_intensity))+
+  geom_point()+
+  geom_smooth()+
+  labs(title = "Calories vs Step Total vs Total Intensity") +
+  theme_minimal() +
+  scale_color_gradient(low = "skyblue", high = "navy")  
+```
+
+![hourly data](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/89dbca66-b1ce-473d-aa64-1778fdbaf56f)
+
+The plot shows the correlation between x = calories, y = step_total, and color = total_intensity, indicating a positive correlation between the three variables.
+
+```r
+# add a day_name column to hourly_data
+hourly_data <- hourly_data %>%
+  mutate(day_name = wday(activity_date, label = TRUE, abbr = FALSE))
+
+# calculate the average of calories per day of week
+ave_calories <- hourly_data %>% 
+  group_by(day_name) %>% 
+  summarise(average_calories = mean(calories)) %>% 
+  arrange(desc(average_calories))
+print(ave_calories)
+
+# calculating the average calories for each hour of the day
+calories_per_hour <- hourly_data %>%
+  group_by(day_name, activity_hour) %>%
+  summarise(ave_calories = mean(calories, na.rm = TRUE), .groups = "drop") %>%
+  spread(key = day_name, value = ave_calories) %>% 
+  select(activity_hour, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday) %>%
+  arrange(activity_hour)
+print(calories_per_hour_per_day)
+
+# transforming data to long format
+calories_long <- calories_per_hour %>%
+  gather(key = "day_name", value = "ave_calories", -activity_hour)
+
+# transforming day_name column into factor
+calories_long$day_name <- factor(calories_long$day_name, levels = rev(c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")))
+
+# heatmap of total calories burned per hour
+ggplot(calories_long, aes(x = activity_hour, y = day_name, fill = ave_calories)) +
+  geom_tile() +
+  scale_fill_gradient(low = "white", high = "darkred") +
+  labs(title = "Heatmap of Total Calories Burned per Hour by Day of the Week",
+       x = "",
+       y = "",
+       fill = "Average Calories") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+
+```
+
+![heatmap](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/225bf19b-cfa2-4a9c-a9e4-16119f089544)
+
+The chart shows that on weekends, the hours of low calories in the morning extend by an additional two hours. The rate of calorie burn increases on Saturday during the afternoon and beyond, as well as on Wednesday between 5 PM and 7 PM.
+
+```r
+# adding a week_day column to minutes_met table
+minutes_met<- minutes_met %>% 
+  drop_na() %>% 
+  mutate(week_day = wday(activity_date, label= TRUE))
+# average of mets
+ave_minutes_met <- minutes_met %>% 
+  summarise(ave_mets = round(mean(me_ts), digits = 2))
+print(ave_minutes_met)
+  
+# calculating the average of mets for each week_day
+day_ave_minutes_met <- minutes_met %>% 
+  group_by(week_day) %>% 
+  summarise(ave_mets = mean(me_ts))
+print(day_ave_minutes_met)
+```
+METs, or Metabolic Equivalents, is a unit used to estimate the amount of energy expended during physical activity. One MET is defined as the energy cost of sitting quietly and is equivalent to a person's resting metabolic rate, approximately 1 kcal/kg/hour. MET values are used to express the intensity of various physical activities and can help estimate the total energy expenditure.
+
+![day ave min mets](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/428e32de-6b12-4233-8540-b2fd7e4e2191)
+
+While the average METs is 14.46, we find that Sunday has the lowest average METs, which is below the overall average. In contrast, Saturday and Tuesday show average METs values higher than the overall average.
+
+```r
+# calculating the average mets for each hour of each day
+mets_per_hour <- minutes_met %>%
+  group_by(week_day, activity_time) %>%
+  summarise(ave_mets = mean(me_ts)) %>%
+  ungroup()
+
+# determine the hour with highest average mets
+highest_day_hour_mets <- mets_per_hour %>%
+  group_by(week_day) %>%
+  slice_max(ave_mets, with_ties = FALSE)
+print(highest_day_hour_mets)
+```
+![highest hour mets](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/c0312e94-b685-4f66-8772-b18f94f4d8e9)
+
+It is evident that the highest average METs during weekends occur in the morning hours, contrary to the rest of the week, where they appear in the evening hours.
+
+```r
+# calculating average mets per user
+mets <- minutes_met %>% 
+  group_by(id) %>% 
+  summarise(ave_mets = mean(me_ts))
+
+# merging mets and weight data into one dataframe
+weight_mets <- weight_summary %>% 
+  left_join(mets, by = "id")
+print(weight_mets)
+
+# correlation between average mets and bmi
+ggplot(weight_mets, aes(x = ave_bmi, y = ave_mets)) +
+  geom_point(size = 3, color = "darkblue") +
+  geom_smooth(method = "lm", color = "darkgrey", se = FALSE) +
+  geom_smooth() +
+  labs(title = "Correlation Between Average METs and BMI",
+       x = "Average BMI",
+       y = "Average METs") +
+  theme_minimal()
+```
+![corr mets bmi](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/f8def0e0-795f-4424-bf45-247a4f6a1fa2)
+
+The relationship between METs and BMI appears to be inverse, indicating that as METs increase, BMI decreases.
+
+```r
+# determine the distinct values in column (value)
+sleeping_quality_values <- minute_sleep %>% 
+  filter(!is.na(value)) %>% 
+  distinct(value)
+print(sleeping_quality_values)
+```
+The data in the "value" column (1, 2, and 3) indicates three stages of sleep quality: deep or good sleep, fair sleep, and poor sleep.
+
+```r
+# add a day_name column
+minute_sleep <- minute_sleep %>%
+  mutate(day_name = weekdays(sleep_date))
+
+# calculating the average minutes of each sleep type per day of the week.
+day_quality_of_sleep <- minute_sleep %>%
+  filter(value %in% c(1, 2, 3)) %>%
+  group_by(day_name) %>%
+  drop_na() %>% 
+  summarise(
+    good_sleep_minutes = (sum(value == 1)/ n()) * 100,
+    fair_sleep_minutes = (sum(value == 2)/ n()) * 100,
+    poor_sleep_minutes = (sum(value == 3)/ n()) * 100
+  )
+
+# transforming day_name column into factor
+day_quality_of_sleep$day_name <- factor(day_quality_of_sleep$day_name,
+                                        levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+
+# "Good Sleep" bar chart
+ggplot(day_quality_of_sleep, aes(x = day_name, y = good_sleep_minutes)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Percentage of Good Sleep Minutes by Day of the Week",
+       x = "Day of the Week",
+       y = "Percentage") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_cartesian(ylim = c(90, 93))
+
+
+# "Fair Sleep" bar chart
+ggplot(day_quality_of_sleep, aes(x = day_name, y = fair_sleep_minutes)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Percentage of Fair Sleep Minutes by Day of the Week",
+       x = "Day of the Week",
+       y = "Percentage") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_cartesian(ylim = c(6, 8))
+
+
+# "Poor Sleep" bar chart
+ggplot(day_quality_of_sleep, aes(x = day_name, y = poor_sleep_minutes)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Percentage of Poor Sleep Minutes by Day of the Week",
+       x = "Day of the Week",
+       y = "Percentage") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+![good sleep](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/667b9967-f06e-4559-80d2-4a9ed86ce4e8)
+
+![fair sleep](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/6aeab71e-c7ca-4b7c-8472-2d3cc34b314c)
+
+![poor sleep](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/af337e5d-01cd-4930-95f5-64007deaa40c)
+
+It's noticeable that Mondays (the beginning of the week) have the highest amount of "good sleep", while Sundays and Saturdays (the weekend) have the lowest. Conversely, in "fair sleep", the least minutes are observed on Mondays, while Sundays and Saturdays rank highest, respectively.
+As for "poor sleep", the fewest minutes are on Mondays (the start of the week), while they are highest at the end of the week.
+
+```r
+# categorizing users according to their number of records
+users_sleep_categories <- sleep_day %>%
+  drop_na() %>% 
+  group_by(id) %>%
+  summarize(num_records = n()) %>%
+  mutate(category = case_when(
+    num_records >= 25 ~ "Active",
+    num_records >= 14 ~ "Moderately Active",
+    TRUE ~ "Low Activity"
+  ))
+
+# summarize the count of users in each category
+category_counts <- users_sleep_categories %>%
+  group_by(category) %>%
+  summarize(count = n()) %>%
+  spread(key = category, value = count)
+print(category_counts)
+```
+![sleep records category counts](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/f08193df-a387-4afd-83c9-f69ad64051cd)
+It is observed that less than half of the users are considered active in recording their sleep data, while a third of them have low activity in logging their sleep.
+
+```r
+# add a day_name column
+sleep_day <- sleep_day %>% 
+  drop_na() %>% 
+  mutate(day_name = weekdays(sleep_day))
+
+# calculate the number of minutes in bed before sleep per day of week
+minutes_b4_sleep <- sleep_day %>% 
+  group_by(day_name) %>% 
+  summarise(min_before_sleep = mean(total_time_in_bed - total_minutes_asleep))
+print(minutes_b4_sleep)
+  
+# Order the days of the week
+day_order <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+minutes_b4_sleep$day_name <- factor(minutes_b4_sleep$day_name, levels = day_order)
+
+# Plotting
+ggplot(minutes_b4_sleep, aes(x = day_name, y = min_before_sleep)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Average Minutes in Bed Before Sleep by Day of the Week",
+       x = "",
+       y = "Minutes Before Sleep") +
+  theme_minimal()
+```
+![before sleep by day](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/a83e0228-3a1f-43d1-b010-4f1fcb31040b)
+
+The chart shows that the highest average number of minutes users spend in bed before falling asleep is on Sunday, while the lowest is midweek on Wednesday and Thursday.
+
+```r
+# merging weight_summary and sleep_day dataframes
+corr_sleep_weight<- weight_summary %>% 
+  left_join(sleep_day, by= "id") %>% 
+  drop_na()
+
+# calculating average of minutes spent in bed before sleep per weight_type
+corr_sleep_weight <- corr_sleep_weight %>% 
+  group_by(weight_type) %>% 
+  summarise(ave_minutes_before_sleep = mean(total_time_in_bed - total_minutes_asleep))
+
+print(corr_sleep_weight)
+```
+![corr sleep weight](https://github.com/idAhmedAli/Bellabeat-Case-Study/assets/171276031/cc98dedd-b408-40b4-bcb3-1d17e5cf8fdd)
+
+Despite having data from only 9 users, we find that there is a positive correlation between excess weight and the time a person spends in bed before falling asleep.
+
+
+## Recommendations:
+- Increase the comprehensiveness of the data to include age, demographics, and the amount of calories consumed by the user.
+- Remind users of their required calorie intake based on their age and activity level.
+- Remind users to avoid dehydration.
+-  Remind users, especially on Saturdays, Tuesdays, and Thursdays, to cover more very active distance.
+-  Remind users to spend more very active minutes on Sundays.
+-  Encourage users to ensure their weights are recorded and remind them to log their weights manually.
+-  Encourage users to walk longer distances to lose weight and burn more calories, especially on weekend mornings.
+- Remind users to increase their METs (Metabolic Equivalent of Task) levels, especially in the evenings during weekends, particularly for those aiming to lose weight. This can enhance sleep quality and reduce the time spent in bed before sleep.
+- Remind the user if they spend longer than necessary in bed before sleep.
+- Remind users to record their sleep data and ensure their devices remain connected to Wi-Fi.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
