@@ -39,12 +39,12 @@ ROCCC:
 - The dataset includes data from only about 30 users.
 - The data lacks information on gender and age.
 
-### Data Preparation and Cleaning:
+### Data Preparation and Cleaning
 ---
 #### Data Collection:
 
 Install packages:
-```R
+```r
 install.packages("tidyverse")
 install.packages("dplyr")
 install.packages("ggplot2")
@@ -63,7 +63,7 @@ library(janitor)
 Upload Files:
 Since the data is divided into two folders, each for a different time period (from 12th March to 11th April and from 12th April to 12th May), we will merge the data files.
 
-```R
+```r
 daily_activity1 <- read.csv("dailyActivity.csv")
 daily_activity2 <- read.csv("dailyActivity2.csv")
 daily_activity <- bind_rows(daily_activity1, daily_activity2)
@@ -107,7 +107,7 @@ str(sleep_day)
 - Remove duplicates after verifying their presence.
 - Clean the column names by converting all letters to lowercase and adding underscores between words.
 
-```R
+```r
 c(daily_activity = sum(duplicated(daily_activity)))
 daily_activity <- clean_names(daily_activity)
 
@@ -149,8 +149,7 @@ sleep_day <- clean_names(sleep_day)
 #### Data Transformation:
 Convert the data types of the date and time columns to a suitable data type.
 
-```R
-
+```r
 daily_activity <- daily_activity %>% 
   mutate(activity_date = mdy(activity_date))
 
@@ -160,7 +159,6 @@ weight_info <- weight_info %>%
   mutate(date = mdy(date),
          time = parse_time(time)
   )
-
 
 hourly_calories <- hourly_calories %>%
   separate(activity_hour, into = c("activity_date", "activity_hour"), sep = " (?=\\d{1,2}:)")
@@ -198,7 +196,7 @@ sleep_day$sleep_day <- as.Date(sleep_day$sleep_day, format = "%m/%d/%Y")
 ```
 #### Data Validation:
 
-```R
+```r
 summary(daily_activity)
 summary(weight_info)
 summary(hourly_calories)
