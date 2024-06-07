@@ -1,7 +1,8 @@
-# Bellabeat Case Study
+# Bellabeat Case Study 💹
 Data Analysis by R
 
 ### Introduction
+---
 Bellabeat is a company known for its health-focused products for women founded in 2013 by Urška Sršen and Sando Mur, Bellabeat quickly established itself as a wellness tech company. By 2016, it had expanded globally and diversified its product range. Bellabeat leverages a mix of traditional and digital marketing, with a significant focus on online engagement through platforms like Google, Facebook, Instagram, and YouTube.
 
 Key Figures:
@@ -20,7 +21,7 @@ Project Goal:
 Analyze consumer data from FitBit Fitness Tracker to identify trends and provide strategic marketing recommendations. This analysis aims to reveal new growth opportunities and enhance Bellabeat’s market presence.
 
 ### Data Source
-
+---
 [FitBit Fitness Tracker Data](https://www.kaggle.com/datasets/arashnic/fitbit/data)
 This data set contains personal fitness tracker from thirty fitbit users. Thirty eligible Fitbit users consented to the submission of
 personal tracker data, including minute-level output for physical activity, heart rate, and sleep monitoring. It includes
@@ -34,12 +35,12 @@ ROCCC:
 - Cited:
 
 ### The Limitations:
+---
 - The dataset includes data from only about 30 users.
 - The data lacks information on gender and age.
 
-
 ### Data Preparation and Cleaning:
-
+---
 #### Data Collection:
 
 Install packages:
@@ -212,6 +213,7 @@ summary(sleep_day)
 Since the date columns range between 2016-03-12 and 2016-05-12, it means the merging process was successful, and the data types of the date and time columns were successfully converted. Additionally, the column names have been appropriately formatted.
 
 ### Analayzing
+---
 Check the number of users for each table
 
 ```r
@@ -785,7 +787,8 @@ print(corr_sleep_weight)
 Despite having data from only 9 users, we find that there is a positive correlation between excess weight and the time a person spends in bed before falling asleep.
 
 
-## Recommendations:
+## Recommendations 🖊️
+---
 - Increase the comprehensiveness of the data to include age, demographics, and the amount of calories consumed by the user.
 - Remind users of their required calorie intake based on their age and activity level.
 - Remind users to avoid dehydration.
